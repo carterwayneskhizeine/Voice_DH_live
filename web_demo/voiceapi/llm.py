@@ -1,8 +1,8 @@
 from openai import OpenAI
 # 豆包
 base_url = "https://ark.cn-beijing.volces.com/api/v3"
-api_key = ""
-model_name = "doubao-pro-32k-character-241215"
+api_key = "dffc6a12-8c8e-4196-9d76-51c483f74b"
+model_name = "doubao-seed-1.6-250615"
 
 # # DeepSeek
 # base_url = "https://api.deepseek.com"
