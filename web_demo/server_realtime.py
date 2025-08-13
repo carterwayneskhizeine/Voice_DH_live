@@ -93,24 +93,41 @@ async def gen_stream(prompt, asr = False, voice_speed=None, voice_id=None):
             # 剩余的文字
             remaining_text = llm_answer_cache[punctuation_pos + 1:]
             print("get_audio: ", first_sentence)
-            base64_string = await get_audio(first_sentence, voice_id=voice_id, voice_speed=voice_speed)
-            chunk = {
-                "text": first_sentence,
-                "audio": base64_string,
-                "endpoint": False
-            }
-
-            # 更新缓存为剩余的文字
-            llm_answer_cache = remaining_text
-            yield f"{json.dumps(chunk)}\n"  # 使用换行符分隔 JSON 块
-            await asyncio.sleep(0.2)  # 模拟异步延迟
+            
+            # 尝试生成音频，如果失败则跳过这一句
+            try:
+                base64_string = await get_audio(first_sentence, voice_id=voice_id, voice_speed=voice_speed)
+                if base64_string:  # 只有在成功生成音频时才发送
+                    chunk = {
+                        "text": first_sentence,
+                        "audio": base64_string,
+                        "endpoint": False
+                    }
+                    # 更新缓存为剩余的文字
+                    llm_answer_cache = remaining_text
+                    yield f"{json.dumps(chunk)}\n"  # 使用换行符分隔 JSON 块
+                    await asyncio.sleep(0.2)  # 模拟异步延迟
+                else:
+                    # 音频生成失败，只更新缓存，跳过这一句
+                    print(f"音频生成失败，跳过文本: {first_sentence}")
+                    llm_answer_cache = remaining_text
+            except Exception as e:
+                print(f"TTS生成异常，跳过文本: {first_sentence}, 错误: {e}")
+                # 发生异常时，只更新缓存，跳过这一句
+                llm_answer_cache = remaining_text
     print("get_audio: ", llm_answer_cache)
+    base64_string = ""
     if len(llm_answer_cache) >= 2:
-        base64_string = await get_audio(llm_answer_cache, voice_id=voice_id, voice_speed=voice_speed)
-    else:
-        base64_string = ""
+        try:
+            base64_string = await get_audio(llm_answer_cache, voice_id=voice_id, voice_speed=voice_speed)
+            if not base64_string:
+                print(f"最后一句音频生成失败，跳过文本: {llm_answer_cache}")
+        except Exception as e:
+            print(f"最后一句TTS生成异常，跳过文本: {llm_answer_cache}, 错误: {e}")
+            base64_string = ""
+    
     chunk = {
-            "text": llm_answer_cache,
+            "text": llm_answer_cache if base64_string else "",  # 如果音频生成失败，不返回文本
             "audio": base64_string,
             "endpoint": True
     }
