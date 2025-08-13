@@ -7,3 +7,5 @@ glfw
 PyOpenGL
 gradio
 sherpa-onnx
+openai
+soundfile

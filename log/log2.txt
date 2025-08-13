@@ -1,0 +1,92 @@
+这个代码只能在远程阿里云服务器上运行才有意义，以下是远程运行的结果
+(dh_live) root@iZ2ze539tadlwtl57jxfh1Z:~/Code/Voice_DH_live# git pull
+Updating 4bed002..c4fc222
+Fast-forward
+ log/log1.txt                | 458 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ web_demo/server_realtime.py |  47 ++++++---
+ web_demo/voiceapi/tts.py    | 128 ++++++++++++++++++------
+ 3 files changed, 587 insertions(+), 46 deletions(-)
+ create mode 100644 log/log1.txt
+(dh_live) root@iZ2ze539tadlwtl57jxfh1Z:~/Code/Voice_DH_live# python web_demo/server_realtime.py
+LLM配置: 提供商=doubao, 模型=doubao-seed-1.6-250615
+INFO:     Started server process [177670]
+INFO:     Waiting for application startup.
+ASR模型正在初始化，请稍等
+asr: engine loaded in 7.17s
+TTS模型正在初始化，请稍等
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8888 (Press CTRL+C to quit)
+INFO:     127.0.0.1:42734 - "POST /eb_stream HTTP/1.1" 200 OK
+gen_stream 1.0 1
+----- streaming request -----
+get_audio:  “北上广”（北京、
+run_tts “北上广”（北京、 1.0 1
+TTS生成异常，跳过文本: “北上广”（北京、, 错误: unterminated character set at position 0
+get_audio:  上海、广州）作为中国超一线城市，
+run_tts 上海、广州）作为中国超一线城市， 1.0 1
+TTS生成异常，跳过文本: 上海、广州）作为中国超一线城市，, 错误: unterminated character set at position 0
+get_audio:  地铁客流量均处于全国前列，
+run_tts 地铁客流量均处于全国前列， 1.0 1
+TTS生成异常，跳过文本: 地铁客流量均处于全国前列，, 错误: unterminated character set at position 0
+get_audio:  拥挤程度受线路规划、
+run_tts 拥挤程度受线路规划、 1.0 1
+TTS生成异常，跳过文本: 拥挤程度受线路规划、, 错误: unterminated character set at position 0
+get_audio:  客流分布、时段等多种因素影响，
+run_tts 客流分布、时段等多种因素影响， 1.0 1
+TTS生成异常，跳过文本: 客流分布、时段等多种因素影响，, 错误: unterminated character set at position 0
+get_audio:  难以简单判定“最拥挤”
+run_tts 难以简单判定“最拥挤” 1.0 1
+TTS生成异常，跳过文本: 难以简单判定“最拥挤”, 错误: unterminated character set at position 0
+get_audio:  ，但可从不同维度对比分析：
+run_tts ，但可从不同维度对比分析： 1.0 1
+TTS生成异常，跳过文本: ，但可从不同维度对比分析：, 错误: unterminated character set at position 0
+get_audio:
+
+
+INFO:     127.0.0.1:45502 - "POST /eb_stream HTTP/1.1" 200 OK
+gen_stream 1.0 1
+----- streaming request -----
+get_audio:  我是由字节跳动公司开发的人工智能助手，
+run_tts 我是由字节跳动公司开发的人工智能助手， 1.0 1
+TTS生成异常，跳过文本: 我是由字节跳动公司开发的人工智能助手，, 错误: unterminated character set at position 0
+get_audio:  能够为你提供信息查询、
+run_tts 能够为你提供信息查询、 1.0 1
+TTS生成异常，跳过文本: 能够为你提供信息查询、, 错误: unterminated character set at position 0
+get_audio:  生活建议、学习辅助等多种帮助。
+run_tts 生活建议、学习辅助等多种帮助。 1.0 1
+TTS生成异常，跳过文本: 生活建议、学习辅助等多种帮助。, 错误: unterminated character set at position 0
+get_audio:  有什么可以帮到你的吗？
+run_tts 有什么可以帮到你的吗？ 1.0 1
+TTS生成异常，跳过文本: 有什么可以帮到你的吗？, 错误: unterminated character set at position 0
+
+以下是我在本机运行的结果：
+需要先激活conda环境
+(base) goldierill@Goldie:~$ cd Code/Voice_DH_live
+(base) goldierill@Goldie:~/Code/Voice_DH_live$ conda activate dh_live
+(dh_live) goldierill@Goldie:~/Code/Voice_DH_live$ python web_demo/server_realtime.py
+LLM配置: 提供商=doubao, 模型=doubao-seed-1.6-250615
+INFO:     Started server process [57663]
+INFO:     Waiting for application startup.
+ASR模型正在初始化，请稍等
+asr: engine loaded in 6.23s
+TTS模型正在初始化，请稍等
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8888 (Press CTRL+C to quit)
+INFO:     127.0.0.1:4906 - "POST /eb_stream HTTP/1.1" 200 OK
+gen_stream 1.0 1
+----- streaming request -----
+get_audio:  你好呀！我是由字节跳动公司开发的人工智能助手，
+run_tts 你好呀！我是由字节跳动公司开发的人工智能助手， 1.0 1
+TTS生成异常，跳过文本: 你好呀！我是由字节跳动公司开发的人工智能助手，, 错误: unterminated character set at position 0
+get_audio:  名字叫豆包～ 不管是想问问题、
+run_tts 名字叫豆包～ 不管是想问问题、 1.0 1
+TTS生成异常，跳过文本: 名字叫豆包～ 不管是想问问题、, 错误: unterminated character set at position 0
+get_audio:  聊聊天，还是想找些实用的信息，
+run_tts 聊聊天，还是想找些实用的信息， 1.0 1
+TTS生成异常，跳过文本: 聊聊天，还是想找些实用的信息，, 错误: unterminated character set at position 0
+get_audio:  都可以随时喊我，我随时都在哦！
+run_tts 都可以随时喊我，我随时都在哦！ 1.0 1
+TTS生成异常，跳过文本: 都可以随时喊我，我随时都在哦！, 错误: unterminated character set at position 0
+get_audio:   😊
+run_tts  😊 1.0 1
+最后一句TTS生成异常，跳过文本:  😊, 错误: unterminated character set at position 0

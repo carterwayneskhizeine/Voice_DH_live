@@ -120,23 +120,95 @@ def clean_text_for_tts(text):
     if not text or not text.strip():
         return ""
     
-    # 移除或替换常见的无法处理的字符
-    # 数字替换为中文
-    text = re.sub(r'\b\d+\b', lambda m: num_to_chinese(int(m.group())), text)
-    
-    # 移除特殊符号
-    text = re.sub(r'[×＊*（）()【】""：:#]+', '', text)
-    text = re.sub(r'[+-=<>]', '', text)
-    
-    # 替换引号
-    text = re.sub(r'[""]', '"', text)
-    text = re.sub(r'['']', "'", text)
-    
-    # 移除多余的换行和空白字符
-    text = re.sub(r'\s+', ' ', text)
-    text = text.strip()
-    
-    return text
+    try:
+        # 数字转换为中文（在清理其他字符之前处理）
+        text = convert_numbers_to_chinese(text)
+        
+        # 使用字符串替换，避免正则表达式语法错误
+        # 移除最常见的问题字符
+        chars_to_remove = [
+            '×', '＊', '*', '（', '）', '(', ')', 
+            '【', '】', '"', '"', '"', '：', ':', '#', 
+            '～', '~', ''', ''', '—', '–', '…', '%', '/', '《', '》', '；'
+        ]
+        
+        for char in chars_to_remove:
+            text = text.replace(char, '')
+        
+        # 移除表情符号
+        emoji_chars = ['😊', '😄', '🤔', '👍', '💪', '❤️', '🎉', '🔥', '✨']
+        for emoji in emoji_chars:
+            text = text.replace(emoji, '')
+        
+        # 移除列表标记
+        text = text.replace('- ', '')
+        text = text.replace('-', '')
+        
+        # 多个点号替换为句号
+        text = text.replace('...', '。')
+        text = text.replace('..', '。')
+        
+        # 清理多余空白和换行
+        while '  ' in text:  # 连续两个空格
+            text = text.replace('  ', ' ')
+        while '\n\n' in text:  # 连续换行
+            text = text.replace('\n\n', '\n')
+        text = text.replace('\n', '')  # 移除所有换行
+        
+        text = text.strip()
+        
+        # 如果清理后文本为空或过短，返回空
+        if len(text) < 2:
+            return ""
+            
+        return text
+        
+    except Exception as e:
+        print(f"文本清理异常: {e}, 原文本: {text}")
+        # 最简单的清理
+        result = text.replace('*', '').replace('(', '').replace(')', '').replace('#', '').strip()
+        return result if len(result) >= 2 else ""
+
+def convert_numbers_to_chinese(text):
+    """将文本中的数字转换为中文"""
+    try:
+        # 手动查找和替换数字
+        result = ""
+        i = 0
+        while i < len(text):
+            if text[i].isdigit():
+                # 找到数字的开始
+                num_start = i
+                while i < len(text) and (text[i].isdigit() or text[i] == '.'):
+                    i += 1
+                num_str = text[num_start:i]
+                
+                # 转换为中文数字
+                try:
+                    if '.' in num_str:
+                        # 处理小数
+                        parts = num_str.split('.')
+                        chinese_num = num_to_chinese(int(parts[0])) + "点" + "".join([digit_to_chinese(d) for d in parts[1]])
+                    else:
+                        chinese_num = num_to_chinese(int(num_str))
+                    result += chinese_num
+                except:
+                    # 如果转换失败，保持原数字
+                    result += num_str
+            else:
+                result += text[i]
+                i += 1
+        
+        return result
+    except Exception as e:
+        print(f"数字转换异常: {e}")
+        return text
+
+def digit_to_chinese(digit):
+    """单个数字转中文"""
+    digit_map = {"0": "零", "1": "一", "2": "二", "3": "三", "4": "四", 
+                 "5": "五", "6": "六", "7": "七", "8": "八", "9": "九"}
+    return digit_map.get(digit, digit)
 
 def num_to_chinese(num):
     """将数字转换为中文（简单版本）"""
