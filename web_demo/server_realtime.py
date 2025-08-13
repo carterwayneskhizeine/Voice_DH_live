@@ -23,8 +23,10 @@ async def lifespan(app: FastAPI):
     TTSEngineManager.initialize(args = args)
     yield
     # 服务关闭时清理资源
-    if ASREngineManager.get_engine():
-        ASREngineManager.get_engine().cleanup()
+    engine = ASREngineManager.get_engine()
+    if engine and hasattr(engine, 'cleanup'):
+        engine.cleanup()
+    print("服务已关闭")
 
 
 app = FastAPI(lifespan=lifespan)
