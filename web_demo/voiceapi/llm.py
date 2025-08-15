@@ -1,5 +1,29 @@
 import os
 from openai import OpenAI
+import contextlib
+
+# ===== 代理管理辅助函数 =====
+def disable_proxy_temporarily():
+    """临时禁用代理环境变量，返回上下文管理器"""
+    @contextlib.contextmanager
+    def proxy_context():
+        old_proxies = {}
+        proxy_vars = ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY']
+        
+        # 保存并删除代理环境变量
+        for var in proxy_vars:
+            if var in os.environ:
+                old_proxies[var] = os.environ[var]
+                del os.environ[var]
+        
+        try:
+            yield
+        finally:
+            # 恢复代理设置
+            for var, value in old_proxies.items():
+                os.environ[var] = value
+    
+    return proxy_context()
 
 # ===== 配置参数（直接写在代码中，可修改切换） =====
 LLM_PROVIDER = "coze"  # 可选: doubao, deepseek, openai, coze
@@ -74,32 +98,6 @@ else:
         api_key=LLM_API_KEY,
     )
 
-
-# ===== 代理管理辅助函数 =====
-def disable_proxy_temporarily():
-    """临时禁用代理环境变量，返回上下文管理器"""
-    import contextlib
-    import os
-    
-    @contextlib.contextmanager
-    def proxy_context():
-        old_proxies = {}
-        proxy_vars = ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY']
-        
-        # 保存并删除代理环境变量
-        for var in proxy_vars:
-            if var in os.environ:
-                old_proxies[var] = os.environ[var]
-                del os.environ[var]
-        
-        try:
-            yield
-        finally:
-            # 恢复代理设置
-            for var, value in old_proxies.items():
-                os.environ[var] = value
-    
-    return proxy_context()
 
 # ===== COZE流式响应适配器 =====
 class CozeStreamAdapter:
