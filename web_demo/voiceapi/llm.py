@@ -41,15 +41,17 @@ if LLM_PROVIDER == "coze":
     try:
         from cozepy import COZE_CN_BASE_URL, Coze, TokenAuth, Message, ChatEventType
         
-        # 初始化COZE客户端
-        coze_client = Coze(
-            auth=TokenAuth(token=COZE_API_TOKEN), 
-            base_url=COZE_CN_BASE_URL
-        )
-        bot_id = config["bot_id"]
-        user_id = config["user_id"]
-        
-        print(f"LLM配置: 提供商=COZE, Bot ID={bot_id}")
+        # 临时禁用代理环境变量来初始化COZE客户端
+        with disable_proxy_temporarily():
+            # 初始化COZE客户端
+            coze_client = Coze(
+                auth=TokenAuth(token=COZE_API_TOKEN), 
+                base_url=COZE_CN_BASE_URL
+            )
+            bot_id = config["bot_id"]
+            user_id = config["user_id"]
+            
+            print(f"LLM配置: 提供商=COZE, Bot ID={bot_id}")
         
     except ImportError:
         raise ValueError("使用COZE需要安装cozepy: pip install cozepy")
@@ -72,6 +74,32 @@ else:
         api_key=LLM_API_KEY,
     )
 
+
+# ===== 代理管理辅助函数 =====
+def disable_proxy_temporarily():
+    """临时禁用代理环境变量，返回上下文管理器"""
+    import contextlib
+    import os
+    
+    @contextlib.contextmanager
+    def proxy_context():
+        old_proxies = {}
+        proxy_vars = ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY']
+        
+        # 保存并删除代理环境变量
+        for var in proxy_vars:
+            if var in os.environ:
+                old_proxies[var] = os.environ[var]
+                del os.environ[var]
+        
+        try:
+            yield
+        finally:
+            # 恢复代理设置
+            for var, value in old_proxies.items():
+                os.environ[var] = value
+    
+    return proxy_context()
 
 # ===== COZE流式响应适配器 =====
 class CozeStreamAdapter:
@@ -105,14 +133,16 @@ def llm_stream(prompt):
 
 def coze_stream(prompt):
     """COZE流式响应实现"""
-    coze_stream = coze_client.chat.stream(
-        bot_id=bot_id,
-        user_id=user_id,
-        additional_messages=[
-            Message.build_user_question_text(prompt)
-        ],
-    )
-    return CozeStreamAdapter(coze_stream)
+    # 临时禁用代理环境变量，避免与Clash冲突
+    with disable_proxy_temporarily():
+        coze_stream = coze_client.chat.stream(
+            bot_id=bot_id,
+            user_id=user_id,
+            additional_messages=[
+                Message.build_user_question_text(prompt)
+            ],
+        )
+        return CozeStreamAdapter(coze_stream)
 
 
 def openai_stream(prompt):
