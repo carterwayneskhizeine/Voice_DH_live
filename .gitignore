@@ -19,3 +19,8 @@ video_data/teeth_ref/*_2.png
 web_demo/models/
 
 models/
+log/
+log/log1.txt
+log/log2.txt
+log/log3.txt
+test/
