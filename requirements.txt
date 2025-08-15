@@ -9,3 +9,4 @@ gradio
 sherpa-onnx
 openai
 soundfile
+cozepy
