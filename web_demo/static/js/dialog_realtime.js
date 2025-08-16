@@ -1,9 +1,26 @@
-const httpBase = window.location.origin;
-const wsBase   = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host;
-let server_url    = `${httpBase}/eb_stream`;
-let websocket_url = `${wsBase}/asr?samplerate=16000`;
+// 将这些变量设置为全局变量以便在Console中调试
+window.httpBase = window.location.origin;
+window.wsBase   = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host;
+window.server_url    = `${window.httpBase}/eb_stream`;
+window.websocket_url = `${window.wsBase}/asr?samplerate=16000`;
+
+// 为了兼容性，保持原有变量名
+const httpBase = window.httpBase;
+const wsBase = window.wsBase;
+let server_url = window.server_url;
+let websocket_url = window.websocket_url;
 let ws = null;   // ASR使用websocket双向流式连接
 let isVoiceMode = true;                 // 默认使用语音模式
+
+// 安全的WebSocket发送函数
+function safeSend(data) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(data);
+        return true;
+    }
+    console.warn('WebSocket not ready, skipping send:', ws ? ws.readyState : 'null');
+    return false;
+}
 
 // 录音阶段
 let asr_audio_recorder = new PCMAudioRecorder();
@@ -75,7 +92,7 @@ async function running_audio_recorder() {
             if (last_3_voice_samples.length > 3) {
                 last_3_voice_samples = last_3_voice_samples.slice(-3);
             }
-            console.log('recording and send audio', pcmData.length, ws.readyState);
+            console.log('recording and send audio', pcmData.length, ws ? ws.readyState : 'disconnected');
 
             // PCM数据处理,只取前 512 个 int16 数据
             const uint8Data = new Uint8Array(pcmData.buffer, 0, 512 * 2);
@@ -99,11 +116,11 @@ async function running_audio_recorder() {
                     isRecording = true;
                     // 先发送两个历史语音，保证ASR不会遗漏首字符
                     if (last_3_voice_samples && last_3_voice_samples.length >= 2) {
-                        ws.send(last_3_voice_samples[0]);
-                        ws.send(last_3_voice_samples[1]);
+                        safeSend(last_3_voice_samples[0]);
+                        safeSend(last_3_voice_samples[1]);
                     }
                 }
-                ws.send(pcmData.buffer);
+                safeSend(pcmData.buffer);
                 last_voice_time = current_time;
             }
             else
@@ -115,12 +132,12 @@ async function running_audio_recorder() {
                         isRecording = false;
                         last_voice_time = null;
                         console.log("vad");
-                        ws.send('vad');
+                        safeSend('vad');
                         await asr_audio_recorder.stop();
                     }
                     else
                     {
-                        ws.send(pcmData.buffer);
+                        safeSend(pcmData.buffer);
                     }
                 }
             }
