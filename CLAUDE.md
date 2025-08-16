@@ -1,69 +1,79 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+此文件为 Claude Code (claude.ai/code) 在处理此代码库时提供指导。
 
-Always respond in Simplified Chinese
+始终使用简体中文回复
 
-## Development Commands
+## 开发命令
 
-### Environment Setup
+### 环境配置
 ```bash
-# Create conda environment
+# 创建conda环境
 conda create -n dh_live python=3.11
 conda activate dh_live
 
-# Install PyTorch (GPU version)
+# 安装PyTorch (GPU版本)
 pip install torch --index-url https://download.pytorch.org/whl/cu124
 
-# Install PyTorch (CPU version, if no GPU)
+# 安装PyTorch (CPU版本，如果没有GPU)
 pip install torch
 
-# Install dependencies
+# 安装依赖
 pip install -r requirements.txt
+
+# 安装COZE支持 (可选)
+pip install cozepy
 ```
 
-### Model Download and Setup
-Download checkpoint files from:
-- [BaiduDrive](https://pan.baidu.com/s/1jH3WrIAfwI3U5awtnt9KPQ?pwd=ynd7)
+### 模型下载和设置
+从以下链接下载检查点文件：
+- [百度网盘](https://pan.baidu.com/s/1jH3WrIAfwI3U5awtnt9KPQ?pwd=ynd7)
 - [GoogleDrive](https://drive.google.com/drive/folders/1az5WEWOFmh0_yrF3I9DEyctMyjPolo8V?usp=sharing)
 
-Place downloaded models in the `checkpoint/` directory.
+将下载的模型放在 `checkpoint/` 目录中。
 
-For real-time conversation, download additional models to `models/`:
+用于实时对话，需下载额外模型到 `models/`：
 - ASR: sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20
-- TTS: sherpa-onnx-vits-zh-ll
+- TTS: **vits-melo-tts-zh_en** (推荐，支持中英文) 或 sherpa-onnx-vits-zh-ll (仅中文)
 
-### Running the Application
+**下载中英文TTS模型：**
+```bash
+cd models
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-melo-tts-zh_en.tar.bz2
+tar -xjf vits-melo-tts-zh_en.tar.bz2
+```
 
-**Gradio Interface (Recommended for first-time users):**
+### 运行应用程序
+
+**Gradio界面 (首次用户推荐):**
 ```bash
 python app.py
 ```
 
-**Video Data Preparation:**
+**视频数据准备:**
 ```bash
-# Process video for mini version
+# 处理mini版本视频
 python data_preparation_mini.py video_data/000002/video.mp4 video_data/000002
 
-# Prepare web assets
+# 准备网页资源
 python data_preparation_web.py video_data/000002
 ```
 
-**Offline Video Generation (Windows only):**
+**离线视频生成 (仅Windows):**
 ```bash
-# Generate video with audio file (16kHz mono WAV required)
+# 使用音频文件生成视频 (需要16kHz单声道WAV)
 python demo_mini.py video_data/000002/assets video_data/audio0.wav output.mp4
 ```
 
-**Web Demo Servers:**
+**网页演示服务器:**
 ```bash
-# Simple web demo
+# 简单网页演示
 python web_demo/server.py
-# Access: http://localhost:8888/static/MiniLive.html
+# 访问: http://localhost:8888/static/MiniLive.html
 
-# Real-time voice conversation (requires ASR/TTS models)
+# 实时语音对话 (需要ASR/TTS模型)
 python web_demo/server_realtime.py
-# Access: http://localhost:8888/static/MiniLive_RealTime.html
+# 访问: http://localhost:8888/static/MiniLive_RealTime.html
 ```
 
 ## Architecture Overview
@@ -122,54 +132,119 @@ Audio Input (Web) → WebSocket → ASR (Server) → LLM (Cloud) → TTS (Server
 Web Rendering ← WebSocket ← Audio Stream + Text Response
 ```
 
-### Configuration
+### 配置说明
 
-**LLM Integration:** Edit `web_demo/voiceapi/llm.py`:
+**LLM集成配置:** 编辑 `web_demo/voiceapi/llm.py`：
+
+**支持的提供商：**
+- `doubao` - 豆包 (默认)
+- `deepseek` - DeepSeek
+- `openai` - OpenAI
+- `coze` - COZE对话机器人
+
+**切换提供商：**
 ```python
-# DeepSeek example
-base_url = "https://api.deepseek.com"
-api_key = "your-api-key-here"
-model_name = "deepseek-chat"
-
-# Doubao example  
-base_url = "https://ark.cn-beijing.volces.com/api/v3"
-api_key = "your-api-key-here"
-model_name = "doubao-pro-32k-character-241215"
+# 修改第29行的LLM_PROVIDER值
+LLM_PROVIDER = "doubao"  # 可选: doubao, deepseek, openai, coze
 ```
 
-**Asset Management:**
-- Character assets: `web_demo/static/assets/` and `web_demo/static/assets2/`
-- Video processing generates `combined_data.json.gz` for web rendering
-- Face textures and 3D meshes stored in respective asset folders
-- Replace assets to change digital human appearance
+**环境变量配置：**
+```bash
+# 豆包配置
+export LLM_API_KEY="your-doubao-api-key"
 
-### Platform Support
+# COZE配置 (需要先设置LLM_PROVIDER="coze")
+export COZE_API_TOKEN="pat_ge5xxxx"
+```
 
-| Platform | Video Processing | Offline Generation | Web Server | Real-time Chat |
-|----------|-----------------|-------------------|------------|----------------|
-| Windows  | ✅              | ✅                | ✅         | ✅             |
-| Linux/macOS | ✅           | ❌                | ✅         | ✅             |
+**COZE Bot配置 (在代码中)：**
+```python
+# 在PROVIDER_CONFIGS["coze"]中修改
+"bot_id": "7538267516649537545",  # 你的Bot ID
+"user_id": "123456789"           # 用户ID
+```
 
-### Technical Requirements
+**代理冲突解决：**
+- 系统已自动处理Clash代理与COZE API的冲突
+- COZE调用时会临时禁用代理，调用完成后自动恢复
+- 无需手动关闭代理服务
 
-- **Browser Support:** WebCodecs API requires HTTPS or localhost
-- **Audio Format:** 16kHz mono WAV files for offline processing
-- **Hardware:** Works on 2-core 4GB systems (ultra-lightweight design)
-- **Commercial Use:** Logo removal requires authorization from matesx.com
+**资源管理:**
+- 人物资源: `web_demo/static/assets/` 和 `web_demo/static/assets2/`
+- 视频处理生成 `combined_data.json.gz` 用于网页渲染
+- 面部纹理和3D网格存储在相应资源文件夹
+- 替换资源以更改数字人外观
 
-### Dependencies
+### 平台支持
 
-**Core Inference:**
-- PyTorch (with optional CUDA support)
-- MediaPipe (face detection and landmarks)
-- OpenGL libraries (PyOpenGL, glfw, pyglm)
+| 平台 | 视频处理 | 离线生成 | 网页服务器 | 实时对话 |
+|------|---------|---------|-----------|---------|
+| Windows  | ✅ | ✅ | ✅ | ✅ |
+| Linux/macOS | ✅ | ❌ | ✅ | ✅ |
 
-**Web Services:**
-- FastAPI/Gradio (web framework)
+### 技术要求
+
+- **浏览器支持:** WebCodecs API 需要 HTTPS 或 localhost
+- **音频格式:** 离线处理需要16kHz单声道WAV文件
+- **硬件要求:** 在2核4GB系统上运行 (超轻量级设计)
+- **商业使用:** Logo移除需要获得 matesx.com 授权
+
+### 重要修改记录
+
+**🔧 TTS模型改进 (2025.08.15)**
+- 默认TTS模型已更改为 `vits-melo-tts-zh_en` (支持中英文)
+- 修复了原模型无法处理英文、数字、特殊符号的问题
+- 添加了智能文本清理功能，自动处理OOV字符
+- 数字自动转换为中文 (如: 2023 → 二千零二十三)
+
+**🔧 COZE对话机器人集成 (2025.08.15)**
+- 新增COZE提供商支持，可替代豆包等传统LLM
+- 统一的流式响应接口，无缝切换不同提供商
+- 自动处理代理冲突，支持Clash等代理工具
+- 环境变量安全管理敏感信息
+
+**🔧 代理冲突解决方案**
+- 程序级别自动绕过代理，解决socks5h协议冲突
+- 临时禁用代理环境变量，API调用完成后自动恢复
+- 无需手动关闭Clash等代理服务
+
+**🔧 异常处理改进**
+- TTS生成失败时自动跳过，继续处理后续文本
+- 完整的错误日志记录，便于问题诊断
+- 流式响应中断保护，避免整个对话流程中断
+
+### 故障排除
+
+**ASR语音识别不工作:**
+1. 确保访问 `http://localhost:8888/static/MiniLive_RealTime.html`
+2. 点击语音输入区域并允许麦克风权限
+3. 检查浏览器控制台是否有WebSocket连接错误
+4. 确认ASR模型文件存在于 `models/` 目录
+
+**TTS语音合成问题:**
+- 英文不播报: 确保使用 `vits-melo-tts-zh_en` 模型
+- 数字不播报: 系统已自动转换为中文
+- 特殊符号错误: 已实现智能文本清理
+
+**COZE API调用失败:**
+- 检查 `COZE_API_TOKEN` 环境变量是否设置
+- 代理冲突: 系统已自动处理，无需手动操作
+- Bot ID配置: 确认 `bot_id` 在代码中正确设置
+
+### 依赖项
+
+**核心推理:**
+- PyTorch (可选CUDA支持)
+- MediaPipe (人脸检测和关键点)
+- OpenGL库 (PyOpenGL, glfw, pyglm)
+
+**网页服务:**
+- FastAPI/Gradio (网页框架)
 - sherpa-onnx (ASR/TTS)
-- WebAssembly runtime (browser-based inference)
+- WebAssembly运行时 (浏览器端推理)
+- cozepy (COZE API支持)
 
-**Data Processing:**
-- scikit-learn, kaldi_native_fbank (audio processing)
-- tqdm (progress bars)
-- Various audio/video codecs via system ffmpeg
+**数据处理:**
+- scikit-learn, kaldi_native_fbank (音频处理)
+- tqdm (进度条)
+- 各种音频/视频编解码器 (通过系统ffmpeg)
