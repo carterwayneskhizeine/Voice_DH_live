@@ -468,7 +468,7 @@ async function setupVertsBuffers() {
 }
 
 async function newVideoTask() {
-    await videoProcessor.init("assets/01.mp4", "assets/combined_data.json.gz");
+    await videoProcessor.init(asset_dir + "/01.mp4", asset_dir + "/combined_data.json.gz");
     // 加载 combined_data.json.gz
     await loadCombinedData();
     await init_gl();
