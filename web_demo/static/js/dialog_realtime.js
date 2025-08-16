@@ -1,5 +1,7 @@
-let server_url = "http://localhost:8888/eb_stream"
-let websocket_url = "ws://localhost:8888/asr?samplerate=16000"
+const httpBase = window.location.origin;
+const wsBase   = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host;
+let server_url    = `${httpBase}/eb_stream`;
+let websocket_url = `${wsBase}/asr?samplerate=16000`;
 let ws = null;   // ASR使用websocket双向流式连接
 let isVoiceMode = true;                 // 默认使用语音模式
 
